@@ -30,7 +30,7 @@ def sendMail(mails,site,etat):
 
     for mail in mails:
         expediteur= "contact@codingagain.com"
-        sujet = "Etat off pour: "+site
+        sujet = site
         message = MIMEMultipart()
         message['From'] = expediteur
         message['To'] = mail
@@ -56,44 +56,47 @@ def load_urls_from_file(filepath):
 
 
 def check_sites(urls, timeout=10):
+    etats=[]
     """Vérifie chaque URL et logge le statut HTTP."""
     for url in urls:
         try:
             response = requests.get(url, timeout=timeout)
             if response.ok:
                 logging.info(f"{url} est en ligne (HTTP {response.status_code})")
+                etats.append(url+":   Fonctionnel")
             else:
                 logging.warning(f"{url} est en ligne mais renvoie HTTP {response.status_code}")
-                sendMail(["ouedraogoaris@gmail.com"],url,"Le site "+url+" est off et renvoie du HTTP "+str(response.status_code))
+                etats.append(url+":   Non Fonctionnel")
+               # sendMail(["ouedraogoaris@gmail.com"],url,"Le site "+url+" est off et renvoie du HTTP "+str(response.status_code))
         except requests.RequestException as e:
-            sendMail(["ouedraogoaris@gmail.com"],url,"Le site "+url+" est hors ligne")
+            #sendMail(["ouedraogoaris@gmail.com"],url,"Le site "+url+" est hors ligne")
+            etats.append(url+":   Hors Ligne")
 
             logging.error(f"Impossible d'atteindre {url}: {e}")
+    texte = "\n\n".join(etats)
+    sendMail(load_urls_from_file("emails.txt"),"Etat des sites",texte)
+
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Vérification périodique de sites web.")
-    parser.add_argument(
-        '--file', '-f', required=True,
-        help='Chemin vers le fichier contenant la liste d\u2019URLs, une par ligne'
-    )
-    args = parser.parse_args()
+    # Définir directement le chemin du fichier ici
+    chemin_fichier = "sites.txt"
 
-    urls = load_urls_from_file(args.file)
+    urls = load_urls_from_file(chemin_fichier)
     if not urls:
         logging.error("Aucune URL chargée. Vérifiez votre fichier.")
         return
 
-    # Planification de la tâche 
-    #schedule.every(10).hours.do(check_sites, urls)
-    tempEnMinute=1
+    # Planification de la tâche
+    tempEnMinute = 1
     schedule.every(tempEnMinute).minutes.do(check_sites, urls)
 
-    logging.info("Démarrage de la vérification toutes les "+str(tempEnMinute)+"mn ..... ")
+    logging.info("Démarrage de la vérification toutes les " + str(tempEnMinute) + "mn .....")
+
     # Exécution continue
     while True:
         schedule.run_pending()
-        time.sleep(60)  # On dort 60 secondes entre chaque vérification des tâches planifiées
+        time.sleep(60)  # On dort 60 secondes entre chaque vérification
 
 
 if __name__ == '__main__':

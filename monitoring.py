@@ -88,10 +88,10 @@ def main():
         return
 
     # Planification de la tâche
-    tempEnMinute = 1
-    schedule.every(tempEnMinute).minutes.do(check_sites, urls)
+    tempEnHeur = 15
+    schedule.every(tempEnHeur).hours.do(check_sites, urls)
 
-    logging.info("Démarrage de la vérification toutes les " + str(tempEnMinute) + "mn .....")
+    logging.info("Démarrage de la vérification toutes les " + str(tempEnHeur) + "heures .....")
 
     # Exécution continue
     while True:
